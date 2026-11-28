@@ -701,7 +701,7 @@ let enteredFs=false;
 function showEndScreen(){
   if(document.getElementById('endOverlay'))return;
   const o=document.createElement('div');o.className='start-overlay';o.id='endOverlay';
-  o.innerHTML='<div class="start-card"><h2>教學已結束</h2><p>已退出全螢幕。瀏覽器不允許網頁自行關閉此分頁，請按 <strong>Ctrl＋W</strong> 關閉；或按下方按鈕重新開始。</p><button class="enter-button" id="restartBtn" type="button">重新進入全螢幕教學</button></div>';
+  o.innerHTML='<div class="start-card"><h2>教學已結束</h2><p>已退出全螢幕。此分頁不是由程式開啟，瀏覽器不允許網頁自行關閉，請按 <strong>Ctrl＋W</strong> 關閉；或按下方按鈕重新開始。</p><button class="enter-button" id="restartBtn" type="button">重新進入全螢幕教學</button></div>';
   document.body.appendChild(o);
   document.getElementById('restartBtn').addEventListener('click',()=>{o.remove();guideStarted=false;startGuide();});
 }
