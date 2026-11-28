@@ -165,6 +165,24 @@ button:disabled{opacity:.45;cursor:not-allowed;transform:none}
     if(window.__lateStart)window.__lateStart();
   }
   window.__earlyGo=go;
+  /* 離開全螢幕偵測（Esc／F11 皆可）：離開後關閉分頁，不能關就跳空白頁 */
+  var wasFs=false,left=false;
+  function isFs(){return !!(document.fullscreenElement||document.webkitFullscreenElement)||(window.innerHeight>=screen.height-2&&window.innerWidth>=screen.width-2);}
+  function onLeave(){
+    if(left)return;left=true;
+    try{if(typeof stopDemo==='function')stopDemo();}catch(_e){}
+    try{window.close();}catch(_e){}
+    setTimeout(function(){location.replace('about:blank');},120);
+  }
+  function check(){
+    if(!window.__earlyStarted||left)return;
+    var f=isFs();
+    if(f){wasFs=true;}else if(wasFs){onLeave();}
+  }
+  document.addEventListener('fullscreenchange',check);
+  document.addEventListener('webkitfullscreenchange',check);
+  window.addEventListener('resize',check);
+  setInterval(check,250);
   window.addEventListener('keydown',function(e){
     if(!window.__earlyStarted&&(e.key==='Enter'||e.keyCode===13)&&!e.repeat){go(e);}
   },true);
@@ -709,8 +727,7 @@ document.addEventListener('fullscreenchange',()=>{
   if(document.fullscreenElement){enteredFs=true;return;}
   if(!enteredFs)return;
   enteredFs=false;stopDemo();
-  try{window.close();}catch(_e){}
-  setTimeout(()=>{location.replace('about:blank');},150);
+  /* 離開處理已移到開頭的早期腳本 */
 });
 (function(){
   const st=document.querySelector('.stage');let drag=null;
