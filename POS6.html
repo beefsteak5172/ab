@@ -151,6 +151,27 @@ button:disabled{opacity:.45;cursor:not-allowed;transform:none}
     <p class="start-note">若瀏覽器不允許全螢幕，教學仍會開啟；可按 F11。全程只播放手冊圖解，不會操作真實 POS。</p>
   </div>
 </div>
+<script>
+/* 早期啟動：頁面資料尚在載入時也能立即回應 ENTER／點擊，避免要按很多次 */
+(function(){
+  var ov=document.getElementById('startOverlay'),btn=document.getElementById('startGuideBtn');
+  window.__earlyStarted=false;window.__earlyFs=null;
+  function go(e){
+    if(window.__earlyStarted)return;
+    window.__earlyStarted=true;
+    if(e&&e.preventDefault)e.preventDefault();
+    ov.classList.add('hidden');
+    try{var el=document.documentElement;window.__earlyFs=el.requestFullscreen?el.requestFullscreen():Promise.reject(new Error('nofs'));if(window.__earlyFs&&window.__earlyFs.catch)window.__earlyFs.catch(function(){});}catch(_e){window.__earlyFs=Promise.reject(_e);window.__earlyFs.catch(function(){});}
+    if(window.__lateStart)window.__lateStart();
+  }
+  window.__earlyGo=go;
+  window.addEventListener('keydown',function(e){
+    if(!window.__earlyStarted&&(e.key==='Enter'||e.keyCode===13)&&!e.repeat){go(e);}
+  },true);
+  btn.addEventListener('click',go);
+  try{window.focus();btn.focus({preventScroll:true});}catch(_e){}
+})();
+</script>
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand"><h1>POS 後台操作手冊｜互動教學</h1><p>27 個逐步演示單元 · 保留原手冊 56 頁圖解 · 本機截圖教學</p></div>
@@ -718,10 +739,11 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSidebar(0);});
 ['slowBtn','fastBtn','allBtn'].forEach(id=>document.getElementById(id).addEventListener('click',()=>closeSidebar(0)));
 async function startGuide(){
   if(guideStarted)return;
+  if(!window.__earlyStarted){window.__earlyGo();return;}
   guideStarted=true;startOverlay.classList.add('hidden');
   try{
-    if(!document.documentElement.requestFullscreen)throw new Error('Fullscreen API 不支援');
-    await document.documentElement.requestFullscreen();
+    if(!window.__earlyFs)throw new Error('Fullscreen API 不支援');
+    await window.__earlyFs;
     document.getElementById('modeTag').textContent='● 全螢幕互動教學';
     setCaption('全螢幕互動教學已開始。選擇慢速或快速演示，或逐步按下一步。');
   }catch(_e){
@@ -729,7 +751,7 @@ async function startGuide(){
     setCaption('教學已開始，但瀏覽器未允許全螢幕；可按 F11，或繼續使用目前視窗。');
   }
 }
-document.getElementById('startGuideBtn').addEventListener('click',startGuide);
+window.__lateStart=startGuide;if(window.__earlyStarted)startGuide();
 document.addEventListener('keydown',e=>{
   if(!startOverlay.classList.contains('hidden')&&e.key==='Enter'&&!e.repeat&&!e.target.closest('button,input,textarea,select')){e.preventDefault();startGuide();}
 });
