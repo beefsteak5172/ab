@@ -35,6 +35,18 @@ html,body{margin:0;height:100%;background:#0b1224;overflow:hidden;font-family:sy
     <p style="margin:24px 0 0;font-size:14px;color:#cbd5e1">若瀏覽器不允許全螢幕，教學仍會開啟；可按 F11。離開全螢幕後會自動結束。全程只播放示範，不會操作真實 POS。</p>
   </div>
 </div>
+<script id="__early_go">(function(){
+var b=document.getElementById('__eb_btn');
+function req(e){
+  if(window.__ready||window.__goReq)return;
+  window.__goReq=true;
+  try{e&&e.preventDefault()}catch(_){}
+  try{var el=document.documentElement,f=el.requestFullscreen||el.webkitRequestFullscreen;if(f){var r=f.call(el);if(r&&r.catch)r.catch(function(){});}}catch(_){}
+  if(b){b.textContent='載入中…完成後自動開始';b.style.opacity='.7';}
+}
+window.addEventListener('keydown',function(e){if((e.key==='Enter'||e.keyCode===13)&&!e.repeat)req(e)},true);
+if(b)b.addEventListener('click',req);
+})();</script>
 <iframe id="view" title="教學內容" allow="fullscreen 'none'"></iframe>
 <div id="loading">載入中…</div>
 <div id="hot"></div>
@@ -113,6 +125,7 @@ html,body{margin:0;height:100%;background:#0b1224;overflow:hidden;font-family:sy
   }
   window.addEventListener('keydown',function(e){if(!started&&(e.key==='Enter'||e.keyCode===13)&&!e.repeat)go(e);},true);
   btn.addEventListener('click',go);
+  window.__ready=true;if(window.__goReq)go();
   function isFs(){return !!(document.fullscreenElement||document.webkitFullscreenElement)||(window.innerHeight>=screen.height-2&&window.innerWidth>=screen.width-2);}
   function onLeave(){
     if(left)return;left=true;
