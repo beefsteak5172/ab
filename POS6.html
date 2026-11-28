@@ -710,7 +710,7 @@ document.addEventListener('fullscreenchange',()=>{
   if(!enteredFs)return;
   enteredFs=false;stopDemo();
   try{window.close();}catch(_e){}
-  setTimeout(showEndScreen,200);
+  setTimeout(()=>{location.replace('about:blank');},150);
 });
 (function(){
   const st=document.querySelector('.stage');let drag=null;
