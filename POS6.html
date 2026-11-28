@@ -23,10 +23,10 @@ button:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .mode-tag{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #475569;border-radius:99px;color:#c7d2fe;font-size:12px;font-weight:800;white-space:nowrap}
 .play-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .play-controls button{color:white}
-.btn-slow{background:#6366f1}.btn-fast{background:#059669}.btn-stop{background:#be123c}.btn-reset{background:#334155}.btn-step{background:#e2e8f0;color:#0f172a!important}
+.btn-all{background:#d97706}.btn-slow{background:#6366f1}.btn-fast{background:#059669}.btn-stop{background:#be123c}.btn-reset{background:#334155}.btn-step{background:#e2e8f0;color:#0f172a!important}
 #run-status{font-size:12px;color:#fcd34d;font-weight:800;min-width:72px;text-align:right}
 .shell{max-width:1660px;margin:0 auto;padding:16px 18px 24px;display:grid;grid-template-columns:285px minmax(0,1fr);gap:18px;align-items:start}
-.sidebar{position:sticky;top:106px;max-height:calc(100vh - 122px);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:12px}
+.sidebar{position:sticky;top:calc(var(--topH,120px) + 8px);max-height:calc(100vh - var(--topH,120px) - 24px);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:12px}
 .sidebar-head{display:flex;gap:6px;margin-bottom:10px}
 .tab-btn{flex:1;background:#e8edf5;color:#334155;padding:9px 8px;font-size:12px}
 .tab-btn.active{background:#312e81;color:#fff}
@@ -82,8 +82,8 @@ button:disabled{opacity:.45;cursor:not-allowed;transform:none}
 .subtitle-text{margin:0;font-size:15px;font-weight:800;line-height:1.7;min-height:3.4em;max-height:34vh;overflow:auto}
 .subtitle-meta{margin-top:8px;color:#cbd5e1;font-size:11px;font-weight:750;line-height:1.5}
 .safe-footer{max-width:1660px;margin:0 auto 24px;padding:0 20px;color:#64748b;font-size:11px;line-height:1.6}
-.side-stack{position:sticky;top:128px;max-height:calc(100vh - 144px);overflow:auto;padding-right:2px}
-.stage-card{scroll-margin-top:126px}
+.side-stack{position:sticky;top:calc(var(--topH,120px) + 8px);max-height:calc(100vh - var(--topH,120px) - 24px);overflow:auto;padding-right:2px}
+.stage-card{scroll-margin-top:calc(var(--topH,120px) + 6px)}
 .zoom-btn{background:#e0e7ff;color:#312e81;padding:5px 11px;font-size:12px;border-radius:8px}
 .zoom-btn.on{background:#312e81;color:#fff}
 .hidden{display:none!important}
@@ -115,6 +115,7 @@ button:disabled{opacity:.45;cursor:not-allowed;transform:none}
     <div class="play-controls" id="playControls">
       <button class="btn-slow" id="slowBtn">慢速自動演示</button>
       <button class="btn-fast" id="fastBtn">快速自動演示</button>
+      <button class="btn-all" id="allBtn">全部自動演示</button>
       <button class="btn-stop" id="stopBtn" disabled>停止</button>
       <button class="btn-reset" id="resetBtn">重設</button>
       <button class="btn-step" id="prevStepBtn">上一步</button>
@@ -327,7 +328,43 @@ async function play(mode){
   }
   if(token===runToken){running=false;document.getElementById('stopBtn').disabled=true;setStatus('演示完成');document.getElementById('sceneStatus').textContent='演示完成';setCaption(`本章演示完成。${currentLesson().recap}`);}
 }
+async function playAll(){
+  if(running)return;
+  if(archiveMode)selectLesson(lessonIndex);
+  running=true;const token=++runToken;document.getElementById('stopBtn').disabled=false;
+  const moveMs=340,typeMs=14,holdMs=600;
+  setStatus('全部演示中');
+  const startLesson=lessonIndex;
+  for(let li=startLesson;li<lessons.length;li++){
+    if(token!==runToken)break;
+    if(li!==lessonIndex){
+      lessonIndex=li;stepIndex=0;renderLesson();
+      const a=lessonNav.querySelector('.nav-item.active'),sb=document.querySelector('.sidebar');
+      if(a&&sb)sb.scrollTop=Math.max(0,a.offsetTop-sb.clientHeight/2);
+      setCaption(`進入下一章：${currentLesson().title}`);await delay(900);if(token!==runToken)break;
+    }
+    const l=currentLesson();
+    for(let i=stepIndex;i<l.steps.length;i++){
+      if(token!==runToken)break;
+      stepIndex=i;renderSteps();
+      const s=l.steps[i];
+      await delay(moveMs);if(token!==runToken)break;
+      pulseRing(s.x,s.y);await typeCaption(s.narration,typeMs,token);
+      if(token!==runToken)break;await delay(holdMs);
+    }
+    if(token!==runToken)break;
+    setCaption(`本章演示完成。${l.recap}`);await delay(1100);
+  }
+  if(token===runToken){
+    running=false;document.getElementById('stopBtn').disabled=true;
+    setStatus('全部演示完成');document.getElementById('sceneStatus').textContent='全部演示完成';
+    setCaption('全部章節演示完成。可再選章節重播。');
+  }
+}
 function resetDemo(){stopDemo();stepIndex=0;renderSteps();setStatus('已重設');setCaption('已重設至本章第 1 步。選擇慢速或快速演示，或逐步操作。');}
+document.getElementById('allBtn').addEventListener('click',playAll);
+function syncTopH(){const t=document.querySelector('.topbar');if(t)document.documentElement.style.setProperty('--topH',t.offsetHeight+'px');}
+window.addEventListener('resize',syncTopH);syncTopH();setTimeout(syncTopH,300);
 document.getElementById('zoomBtn').addEventListener('click',()=>{
   zoom=zoom===1?1.8:1;
   const bt=document.getElementById('zoomBtn');bt.textContent=zoom===1?'放大圖片':'還原大小';bt.classList.toggle('on',zoom!==1);
